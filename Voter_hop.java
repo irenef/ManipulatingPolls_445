@@ -1,11 +1,11 @@
-// Voter_truthful.java: sample implementation for Voter
+// // Voter_truthful.java: sample implementation for Voter
 // COS 445 HW1, Spring 2018
 
 import java.util.List;
 import java.util.Arrays;
 import java.util.ArrayList;
 
-public class Voter_yiranf_lkermode implements Voter {
+public class Voter_hop implements Voter {
     // Constants
     private double MEASURE_OF_BALANCE = 0.1; 
     private double SWITCH_THRESH = 0.3;
@@ -44,7 +44,7 @@ public class Voter_yiranf_lkermode implements Voter {
         this.lastRes = F;
         polls = new ArrayList<Poll>();  
         currPoll = 0;
-        int cap = P / 10;
+        int cap = P / 2;
         no_of_honest_rounds = (cap >= 3) ? cap : 3;
 
     }
@@ -56,42 +56,26 @@ public class Voter_yiranf_lkermode implements Voter {
 
     public Candidate getPoll() {
         Candidate res = null; 
-        if (P == 0 || currPoll < no_of_honest_rounds)
-            res = F; 
-        else {
+        if (P == 0)
+            return F; 
+        else if (currPoll != P-1) {
+            if (currPoll % 5 != 0) 
+                res = F;
+            else 
+                res = this.getSndCand(); 
+        } else {
             Poll poll = polls.get(currPoll-1); 
             double fst = poll.fstRatio; 
             double snd = poll.sndRatio; 
             double thr = poll.thrRatio; 
             double max = Math.max(fst, Math.max(snd, thr)); 
 
-            if (Math.abs(fst-snd) < MEASURE_OF_BALANCE && 
-                Math.abs(snd-thr) < MEASURE_OF_BALANCE &&
-                Math.abs(fst-thr) < MEASURE_OF_BALANCE) {
+            if (fst == max) 
                 res = F; 
-            } else {
-                if (fst == max) {
-                    res = F; 
-                } else if (snd == max) {
-                    if (fst > thr) {
-                        if (snd - fst > SWITCH_THRESH) {
-                            System.out.println("polled snd");
-                            res = this.getSndCand(); 
-                        }
-                    } else {
-                        System.out.println("polled snd");
-                        res = this.getSndCand(); 
-                    }
-                } else {    
-                    if (snd - fst > 
-                        (SWITCH_THRESH - (0.2 * ((currPoll-1)/ (double) P)))) {
-                            System.out.println("polled snd");
-                            res = this.getSndCand();
-                    } 
-                }
-            }
-            if (res == null) res = F; 
+            else 
+                res = this.getSndCand();
         }
+
         
         currPoll++; 
         lastRes = res;

@@ -1,39 +1,122 @@
-// // Voter.java: interface for Voter
-// // COS 445 HW2, Spring 2018
+// // Voter_truthful.java: sample implementation for Voter
+// COS 445 HW1, Spring 2018
 
-// import java.util.List;
+import java.util.List;
+import java.util.Arrays;
+import java.util.ArrayList;
 
-// public interface VoterTwo {
-//     public static enum Candidate {
-//         A, // A \prec B \prec C
-//         B, // B \prec C \prec A
-//         C, // C \prec A \prec B
-//     }
+public class Voter_second implements Voter {
+    // Constants
+    private double MEASURE_OF_BALANCE = 0.1; 
+    private double SWITCH_THRESH = 0.3;
 
-//     // The methods will be called in the following order:
-//     // * setup
-//     // * Repeat P times:
-//     //   * getPoll
-//     //   * addresults
-//     // * getVote
+    // IV
+    private int P; 
+    private int N;  
+    private Candidate F;
+    private List<Poll> polls; 
+    private int currPoll; 
+    private int no_of_honest_rounds;
+    private Candidate lastRes;
 
-//     // Given the stats of this simulation, initialize your Voter when this method is called.
-//     // N is the number of voters
-//     // P is the number of polls before the election (not inclusive)
-//     // v is your voter ID (your index in results)
-//     // F is your favorite candidate (uniquely defines your preferences
-//     public void setup(int N, int P, int v, Candidate F);
+    private class Poll {
+        double fstRatio; 
+        double sndRatio;
+        double thrRatio;
 
-//     // Report your favorite candidate (or lie about it)
-//     public Candidate getPoll() {
+        private Poll(double fst, double snd, double thr) {
+            fstRatio = fst; 
+            sndRatio = snd;
+            thrRatio = thr;
+        }
 
-//     }
+        public String toString() {
+            return fstRatio + " - " + 
+                    sndRatio + " - " + 
+                    thrRatio + "\n";
+        }
+    }
 
-//     // Update your privates with knowledge of the outcome of previous polls
-//     // Indices across multiple calls to addResults correspond to the same voter
-//     // results.size() == N
-//     public void addResults(List<Candidate> results);
+    public void setup(int N, int P, int v, Candidate F) { 
+        this.P = P; 
+        this.N = N; 
+        this.F = F;
+        this.lastRes = F;
+        polls = new ArrayList<Poll>();  
+        currPoll = 0;
+        int cap = P / 2;
+        no_of_honest_rounds = (cap >= 3) ? cap : 3;
 
-//     // Return the candidate for whom you wish to vote in the real election
-//     public Candidate getVote();
-// }
+    }
+
+    private Candidate getSndCand() {
+        return (this.F == Candidate.A) ? Candidate.B : 
+                (this.F == Candidate.B ? Candidate.C : Candidate.A);
+    }
+
+    public Candidate getPoll() {
+        Candidate res = null; 
+        if (P == 0 || currPoll < no_of_honest_rounds)
+            res = F; 
+        else {
+            Poll poll = polls.get(currPoll-1); 
+            double fst = poll.fstRatio; 
+            double snd = poll.sndRatio; 
+            double thr = poll.thrRatio; 
+            double max = Math.max(fst, Math.max(snd, thr)); 
+
+            if (Math.abs(fst-snd) < MEASURE_OF_BALANCE && 
+                Math.abs(snd-thr) < MEASURE_OF_BALANCE &&
+                Math.abs(fst-thr) < MEASURE_OF_BALANCE) {
+                res = F; 
+            } else {
+                if (max != fst) {
+                    res = this.getSndCand(); 
+                } 
+            }
+
+            if (res == null) res = F; 
+        }
+        
+        currPoll++; 
+        lastRes = res;
+
+        return res;
+    }
+
+
+    public void addResults(List<Candidate> results) {
+        int countA = 0; 
+        int countB = 0; 
+        int countC = 0; 
+
+        for (Candidate c : results) {
+            switch (c) {
+                case A: 
+                    countA++;
+                    break; 
+                case B: 
+                    countB++;
+                    break;
+                default: 
+                    countC++;  
+            }
+        }
+
+        double total = results.size(); 
+        int topCount = (F == Candidate.A) ? countA : ((F == Candidate.B) ? countB : countC);
+        int secCount = (F == Candidate.A) ? countB : ((F == Candidate.B) ? countC : countA);
+        int thrCount = (F == Candidate.A) ? countC : ((F == Candidate.B) ? countA : countB);
+        Poll p = new Poll(
+            topCount / total,
+            secCount / total,
+            thrCount / total
+        );
+
+        polls.add(p);     
+    }
+
+    public Candidate getVote() {
+        return lastRes;
+    }
+}

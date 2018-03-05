@@ -15,7 +15,7 @@ import java.util.stream.IntStream;
 public class Elections {
     //L private static final int N = {};//
     private static final String[] netids = new String[N];
-    private static final int P = 10;
+    private static final int P = 100;
     private static final List<Voter.Candidate> VALUES =
         Collections.unmodifiableList(Arrays.asList(Voter.Candidate.values()));
     private static final int N_CANDIDATES = VALUES.size();
@@ -72,6 +72,9 @@ public class Elections {
         //R netids[{0}] = "{netID}";//
 
         double[] res = new double[N];
+        // TESTing
+        double sum1 = 0, sum2 = 0, sum3 = 0; 
+        int cnt1 = 0, cnt2 = 0, cnt3 = 0;
 
         final int numTrials = 100;
         for (int i = 0; i != N; ++i) {
@@ -85,10 +88,23 @@ public class Elections {
         }
         for (int i = 0; i != N; ++i) {
             res[i] /= numTrials;
+            if (netids[i] == "hop") {
+                sum1 += res[i]; 
+                cnt1++; 
+            } else if (netids[i] == "yiranf_lkermode") {
+                sum2 += res[i];
+                cnt2++; 
+            } else {
+                sum3 += res[i]; 
+                cnt3++; 
+            }
         }
         System.out.println("netID,score");
         for (int i = 0; i != N; ++i) {
             System.out.println(netids[i] + "," + Double.toString(res[i]));
         }
+        System.out.println("avg (hop): " + sum1 / (double) cnt1); 
+        System.out.println("avg (yiranf_lkermode): " + sum2 / (double) cnt2); 
+        System.out.println("avg (second): " + sum3 / (double) cnt3); 
     }
 }
